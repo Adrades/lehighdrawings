@@ -10,8 +10,6 @@ from numba import njit, prange, float64, uint8
 binaryThreshold = 5
 histogramThreshold = 0.96
 
-
-
 class MaskerParser(argparse.ArgumentParser):
     def __init__(self):
         super().__init__(
@@ -25,8 +23,8 @@ class MaskerParser(argparse.ArgumentParser):
         self.add_argument(
             "-i",
             "--input",
-            default=[],
-            action="append",
+            nargs="+",
+            type=str,
             help="Add an image to mask",
         )
 
@@ -40,6 +38,15 @@ class MaskerParser(argparse.ArgumentParser):
         )
 
         self.add_argument(
+            "-p",
+            "--prefix",
+            default="./",
+            action="store",
+            type=str,
+            help="Prefix for mask files",
+        )
+
+        self.add_argument(
             "-v", "--verbose", action="store", help="Print more logging messages"
         )
 
@@ -49,6 +56,7 @@ class Masker:
         args = MaskerParser().parse_args()
         self.folder = args.output
         self.images = args.input
+        self.prefix = args.prefix
 
         for img in self.images:
             name = os.path.basename(img)
@@ -91,7 +99,7 @@ class Masker:
         res[:, histogram > 0] = 255
         res[:, histogram < res.shape[0] * 255 * histogramThreshold] = 0
 
-        cv2.imwrite(f"{self.folder}/mask_{img_name}", res)
+        cv2.imwrite(f"{self.folder}/{self.prefix}{img_name}", res)
 
 
 @njit(float64[:,:,:](uint8[:,:,:]), parallel=True)
@@ -124,6 +132,11 @@ def extract_channels(bgr, K, i_chan):
             chan[i, j] = np.uint8((1 - bgr[i, j, i_chan] / ki ) * 255)
     return chan
 
-if __name__ == "__main__":
+
+# entrypoint for poetry wrapper
+def main():
     Masker()
+
+if __name__ == "__main__":
+    main()
 

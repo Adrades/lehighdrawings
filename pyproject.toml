@@ -11,6 +11,8 @@ python = "^3.9"
 opencv-python = "^4.7.0.72"
 numba = "^0.56.4"
 
+[tool.poetry.scripts]
+mask = "mask.main"
 
 [build-system]
 requires = ["poetry-core"]
